@@ -1,18 +1,34 @@
-# Multishot Plugin
+# SimpleMultishot Plugin
 
-A Skyrim SKSE plugin that allows players to fire multiple arrows simultaneously when using a bow.
+A Skyrim SKSE plugin that provides two powerful archery enhancement systems: **Multishot** for firing multiple arrows simultaneously, and **Penetrating Arrows** for arrows that pierce through enemies.
 
 ## Features
 
+### Multishot System
 - Fire multiple arrows at once by pressing the 'C' key (configurable)
 - Works only with bows (not crossbows) and only when bow is drawn and ready
 - Configurable number of arrows (2-10, default: 3)
 - Horizontal fan spread pattern with configurable angle
 - Smart ammunition consumption (only consumes arrows for successful launches)
-- Built-in cooldown system to prevent spam firing
+- Built-in cooldown system (20 seconds default) to prevent spam firing
+- 5-second ready window after cooldown ends
 - Proper 3D aiming with pitch compensation
 - Animation state validation for realistic bow mechanics
+
+### Penetrating Arrow System
+- Hold bow at full draw for 3 continuous seconds to charge a penetrating arrow
+- Charged arrows pierce through NPCs while dealing damage, but stop at walls/objects
+- Enchantment effects are removed from penetrating arrows for balance
+- Enhanced damage (2x power) and speed (1.5x) for penetrating shots
+- Built-in cooldown system (10 seconds default) after firing
+- Requires truly continuous draw - stopping and resuming resets the charge
+- Completely independent from multishot system
+
+### General Features
+- Both systems work independently and can be used together
 - Fully configurable via INI file with validation
+- Real-time notifications for system status
+- Comprehensive logging for debugging
 
 ## Installation
 
@@ -22,12 +38,20 @@ A Skyrim SKSE plugin that allows players to fire multiple arrows simultaneously 
 
 ## Configuration
 
-Edit `Data/SKSE/Plugins/Multishot.ini` to customize:
+Edit `Data/SKSE/Plugins/Multishot.ini` to customize both systems:
 
-- `bEnabled`: Enable/disable the plugin (1/0)
-- `iArrowCount`: Number of arrows per multishot (default: 3)
-- `fSpreadAngle`: Spread angle in degrees (default: 15.0)
+### Multishot Settings
+- `bEnabled`: Enable/disable multishot (1/0, default: 1)
+- `iArrowCount`: Number of arrows per multishot (2-10, default: 3)
+- `fSpreadAngle`: Spread angle in degrees (5-45, default: 15.0)
 - `iKeyCode`: Key code for activation (default: 46 = 'C' key)
+- `fReadyWindowDuration`: Ready window duration in seconds (1-30, default: 5.0)
+- `fCooldownDuration`: Cooldown duration in seconds (5-300, default: 20.0)
+
+### Penetrating Arrow Settings
+- `bEnabled`: Enable/disable penetrating arrows (1/0, default: 1)
+- `fChargeTime`: Time to charge penetrating arrow in seconds (1-10, default: 3.0)
+- `fCooldownDuration`: Cooldown duration in seconds (0-300, default: 10.0)
 
 ### Key Codes Reference
 
@@ -40,16 +64,25 @@ Common key codes for `iKeyCode`:
 
 ## Usage
 
+### Multishot System
 1. Equip a bow and draw it
-2. Press the configured key ('C' by default) to fire multiple arrows
-3. Ensure you have sufficient arrows in your inventory
+2. Press the configured key ('C' by default) to activate multishot mode
+3. You have 5 seconds to fire your multishot
+4. Release the arrow to fire multiple arrows simultaneously
+5. Wait for the 20-second cooldown before activating again
 
-The plugin will:
-- Check if you have a bow equipped (not crossbow)
-- Verify the weapon is drawn
-- Ensure you have enough arrows for the multishot
-- Fire arrows in a horizontal fan pattern
-- Consume the appropriate number of arrows from your inventory
+### Penetrating Arrow System
+1. Equip a bow and draw it fully
+2. Hold the bow at full draw for 3 continuous seconds
+3. You'll see the arrow become charged (check logs for confirmation)
+4. Release to fire a penetrating arrow that pierces through enemies
+5. Wait for the 10-second cooldown before charging again
+
+### Combined Usage
+- Both systems can be used together
+- You can activate multishot and then charge a penetrating arrow
+- Each system has its own independent cooldown
+- Penetrating arrows work with multishot (all arrows become penetrating)
 
 ## Requirements
 
@@ -73,12 +106,27 @@ The plugin will:
 
 This plugin uses CommonLibSSE-NG and supports Skyrim SE, AE, GOG, and VR versions.
 
-The multishot system:
+### Multishot System
 - Registers an input event handler to capture key presses
+- Uses animation events to detect arrow release
 - Validates player state and weapon type
 - Calculates spread angles for arrow trajectories
 - Launches multiple projectiles using the game's arrow system
-- Manages ammunition consumption
+- Manages ammunition consumption and cooldown states
+
+### Penetrating Arrow System
+- Uses animation events (`bowDraw`, `arrowRelease`) for bow state tracking
+- Implements continuous draw detection with timeout mechanism
+- Modifies projectile runtime data for penetration behavior
+- Sets `impactResult` to `kImpale` for damage + penetration
+- Removes enchantment effects from penetrating arrows
+- Independent state management with charging and cooldown phases
+
+### Shared Infrastructure
+- Both systems share an update loop for state management
+- Cross-system notification updates ensure proper UI feedback
+- Comprehensive logging system for debugging and monitoring
+- Thread-safe singleton pattern for handler management
 
 ## License
 

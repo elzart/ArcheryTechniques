@@ -66,8 +66,35 @@ void Config::LoadFromINI() {
         multishot.cooldownDuration = 300.0f;
     }
     
+    // Penetrating Arrow Settings
+    penetratingArrow.enabled = ini.GetBoolValue("PenetratingArrow", "bEnabled", penetratingArrow.enabled);
+    penetratingArrow.chargeTime = static_cast<float>(ini.GetDoubleValue("PenetratingArrow", "fChargeTime", penetratingArrow.chargeTime));
+    penetratingArrow.cooldownDuration = static_cast<float>(ini.GetDoubleValue("PenetratingArrow", "fCooldownDuration", penetratingArrow.cooldownDuration));
+    
+    // Validate penetrating arrow configuration values
+    if (penetratingArrow.chargeTime < 1.0f) {
+        SKSE::log::warn("Penetrating arrow charge time {} is too short, setting to minimum of 1 second", penetratingArrow.chargeTime);
+        penetratingArrow.chargeTime = 1.0f;
+    }
+    if (penetratingArrow.chargeTime > 10.0f) {
+        SKSE::log::warn("Penetrating arrow charge time {} is too long, setting to maximum of 10 seconds", penetratingArrow.chargeTime);
+        penetratingArrow.chargeTime = 10.0f;
+    }
+    // Stamina cost validation removed
+    if (penetratingArrow.cooldownDuration < 0.0f) {
+        SKSE::log::warn("Penetrating arrow cooldown duration {} is negative, setting to 0", penetratingArrow.cooldownDuration);
+        penetratingArrow.cooldownDuration = 0.0f;
+    }
+    if (penetratingArrow.cooldownDuration > 300.0f) {
+        SKSE::log::warn("Penetrating arrow cooldown duration {} is too long, setting to maximum of 300 seconds", penetratingArrow.cooldownDuration);
+        penetratingArrow.cooldownDuration = 300.0f;
+    }
+    
     SKSE::log::info("Multishot config loaded - Enabled: {}, Arrow Count: {}, Spread Angle: {}, Key Code: {}, Ready Window: {}s, Cooldown: {}s", 
                     multishot.enabled, multishot.arrowCount, multishot.spreadAngle, multishot.keyCode, 
                     multishot.readyWindowDuration, multishot.cooldownDuration);
+    
+    SKSE::log::info("Penetrating Arrow config loaded - Enabled: {}, Charge Time: {}s, Cooldown: {}s", 
+                    penetratingArrow.enabled, penetratingArrow.chargeTime, penetratingArrow.cooldownDuration);
 }
 

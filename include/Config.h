@@ -14,8 +14,15 @@ struct MultishotConfig {
     float cooldownDuration = 20.0f; // Cooldown period in seconds
 };
 
+struct PenetratingArrowConfig {
+    bool enabled = true;
+    float chargeTime = 3.0f; // Time to charge penetrating arrow in seconds
+    float cooldownDuration = 10.0f; // Cooldown period in seconds
+};
+
 struct Config {
     MultishotConfig multishot;
+    PenetratingArrowConfig penetratingArrow;
 
     Config();
 

@@ -1,9 +1,11 @@
 #include <RE/Skyrim.h>
 #include <SKSE/SKSE.h>
 #include <spdlog/sinks/basic_file_sink.h>
+#include <thread>
 
 #include "Config.h"
 #include "MultishotHandler.h"
+#include "PenetratingArrowHandler.h"
 
 using namespace std::literals;
 
@@ -97,7 +99,19 @@ void OnSKSEMessage(SKSE::MessagingInterface::Message* message) {
             SKSE::log::error("Failed to get BSInputDeviceManager singleton");
         }
 
-        // Note: Animation event handler will be registered when player enters game
+        // Initialize penetrating arrow handler with independent update system
+        // Register a frame update callback for the penetrating arrow system
+        auto* eventSource = RE::BSInputDeviceManager::GetSingleton();
+        if (eventSource) {
+            // Use a simple approach: register the penetrating arrow handler for input events too
+            // This will ensure it gets regular updates when the player is active
+            eventSource->AddEventSink(PenetratingArrowHandler::GetSingleton());
+            SKSE::log::info("Penetrating arrow handler registered for input events");
+        }
+        
+        SKSE::log::info("Penetrating arrow handler initialized independently");
+
+        // Note: Animation event handlers will be registered when player enters game
         SKSE::log::info("Plugin initialization complete - animation events will be registered when player loads");
     }
 }

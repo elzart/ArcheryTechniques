@@ -37,6 +37,7 @@ add_library(${PROJECT_NAME} SHARED
     plugin.cpp
     src/Config.cpp
     src/MultishotHandler.cpp
+    src/PenetratingArrowHandler.cpp
 ) 
 target_link_libraries(${PROJECT_NAME} PRIVATE CommonLibSSE)
 

@@ -1,4 +1,5 @@
 #include "MultishotHandler.h"
+#include "PenetratingArrowHandler.h"
 #include "Config.h"
 #include <cmath>
 #include <chrono>
@@ -509,4 +510,6 @@ void MultishotHandler::UpdateState()
             RE::DebugNotification("Multishot: Ready to activate");
         }
     }
+    
+    // Penetrating arrow system is now fully independent
 }
