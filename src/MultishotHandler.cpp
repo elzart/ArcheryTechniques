@@ -39,10 +39,10 @@ RE::BSEventNotifyControl MultishotHandler::ProcessEvent(RE::InputEvent* const* a
             
             // Add debouncing to prevent double-triggering
             auto now = std::chrono::steady_clock::now();
-            if ((now - lastToggleTime) >= std::chrono::milliseconds(200)) {
-                if (CanToggleMultishot()) {
-                    ToggleMultishot();
-                    lastToggleTime = now;
+            if ((now - lastActivationTime) >= std::chrono::milliseconds(200)) {
+                if (CanActivateReadyState()) {
+                    ActivateReadyState();
+                    lastActivationTime = now;
                 }
             }
             
@@ -77,19 +77,34 @@ RE::BSEventNotifyControl MultishotHandler::ProcessEvent(const RE::BSAnimationGra
     return RE::BSEventNotifyControl::kContinue;
 }
 
-void MultishotHandler::ToggleMultishot()
+void MultishotHandler::ActivateReadyState()
 {
-    multishotEnabled = !multishotEnabled;
+    // Update state before checking - this handles expiration and cooldown transitions
+    UpdateState();
     
-    if (multishotEnabled) {
-        // Try to register animation event handler when first enabled
-        RegisterAnimationEventHandler();
-        SKSE::log::info("Multishot enabled");
-        RE::DebugNotification("Multishot: ON");
-    } else {
-        SKSE::log::info("Multishot disabled");
-        RE::DebugNotification("Multishot: OFF");
+    if (currentState != MultishotState::Inactive) {
+        // Already in ready state or on cooldown
+        if (currentState == MultishotState::Ready) {
+            SKSE::log::info("Multishot already in ready state");
+            RE::DebugNotification("Multishot: Already READY");
+        } else if (currentState == MultishotState::Cooldown) {
+            float remainingCooldown = GetRemainingCooldownTime();
+            SKSE::log::info("Multishot on cooldown, {} seconds remaining", remainingCooldown);
+            RE::DebugNotification(std::format("Multishot: Cooldown ({:.0f}s)", remainingCooldown).c_str());
+        }
+        return;
     }
+    
+    // Activate ready state
+    currentState = MultishotState::Ready;
+    readyStateStartTime = std::chrono::steady_clock::now();
+    
+    // Register animation event handler when first activated
+    RegisterAnimationEventHandler();
+    
+    auto* config = Config::GetSingleton();
+    SKSE::log::info("Multishot ready state activated for {} seconds", config->multishot.readyWindowDuration);
+    RE::DebugNotification("Multishot: READY");
 }
 
 void MultishotHandler::RegisterAnimationEventHandler()
@@ -117,7 +132,7 @@ void MultishotHandler::RegisterAnimationEventHandler()
     }
 }
 
-bool MultishotHandler::CanToggleMultishot()
+bool MultishotHandler::CanActivateReadyState()
 {
     auto* player = RE::PlayerCharacter::GetSingleton();
     if (!player) {
@@ -143,7 +158,11 @@ bool MultishotHandler::CanToggleMultishot()
         return false;
     }
 
-    return true;
+    // Update state to check for transitions
+    UpdateState();
+    
+    // Can only activate if currently inactive
+    return currentState == MultishotState::Inactive;
 }
 
 bool MultishotHandler::IsValidBow(RE::TESObjectWEAP* weapon)
@@ -159,7 +178,10 @@ bool MultishotHandler::IsValidBow(RE::TESObjectWEAP* weapon)
 // This gets called by your animation event handler when player releases arrow
 void MultishotHandler::OnArrowRelease()
 {
-    if (!multishotEnabled) {
+    // Update state to handle any transitions
+    UpdateState();
+    
+    if (currentState != MultishotState::Ready) {
         return; // Normal shot, do nothing
     }
 
@@ -180,6 +202,7 @@ void MultishotHandler::OnArrowRelease()
     
     if (!HasSufficientAmmo(additionalArrows)) {
         SKSE::log::info("Insufficient ammo for multishot");
+        RE::DebugNotification("Multishot: Insufficient ammo");
         return;
     }
 
@@ -190,6 +213,13 @@ void MultishotHandler::OnArrowRelease()
     if (!weapon || !ammo) {
         return;
     }
+
+    // Transition to cooldown state
+    currentState = MultishotState::Cooldown;
+    cooldownStartTime = std::chrono::steady_clock::now();
+    
+    SKSE::log::info("Multishot triggered! Starting cooldown for {} seconds", config->multishot.cooldownDuration);
+    RE::DebugNotification(std::format("Multishot: Cooldown ({:.0f}s)", config->multishot.cooldownDuration).c_str());
 
     // Delay multishot launch to let vanilla arrow launch completely first
     auto* taskInterface = SKSE::GetTaskInterface();
@@ -415,7 +445,68 @@ void MultishotHandler::ConsumeAmmo(int count)
     SKSE::log::debug("Consumed {} arrows", count);
 }
 
-bool MultishotHandler::IsMultishotEnabled() const
+// State query methods
+bool MultishotHandler::IsInReadyState() const
 {
-    return multishotEnabled;
+    return currentState == MultishotState::Ready;
+}
+
+bool MultishotHandler::IsOnCooldown() const
+{
+    return currentState == MultishotState::Cooldown;
+}
+
+MultishotState MultishotHandler::GetCurrentState() const
+{
+    return currentState;
+}
+
+float MultishotHandler::GetRemainingReadyTime() const
+{
+    if (currentState != MultishotState::Ready) {
+        return 0.0f;
+    }
+    
+    auto* config = Config::GetSingleton();
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - readyStateStartTime).count() / 1000.0f;
+    float remaining = config->multishot.readyWindowDuration - elapsed;
+    return std::max(0.0f, remaining);
+}
+
+float MultishotHandler::GetRemainingCooldownTime() const
+{
+    if (currentState != MultishotState::Cooldown) {
+        return 0.0f;
+    }
+    
+    auto* config = Config::GetSingleton();
+    auto now = std::chrono::steady_clock::now();
+    auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - cooldownStartTime).count() / 1000.0f;
+    float remaining = config->multishot.cooldownDuration - elapsed;
+    return std::max(0.0f, remaining);
+}
+
+void MultishotHandler::UpdateState()
+{
+    auto* config = Config::GetSingleton();
+    auto now = std::chrono::steady_clock::now();
+    
+    if (currentState == MultishotState::Ready) {
+        // Check if ready window has expired
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - readyStateStartTime).count() / 1000.0f;
+        if (elapsed >= config->multishot.readyWindowDuration) {
+            currentState = MultishotState::Inactive;
+            SKSE::log::info("Multishot ready window expired");
+            RE::DebugNotification("Multishot: Expired");
+        }
+    } else if (currentState == MultishotState::Cooldown) {
+        // Check if cooldown has finished
+        auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(now - cooldownStartTime).count() / 1000.0f;
+        if (elapsed >= config->multishot.cooldownDuration) {
+            currentState = MultishotState::Inactive;
+            SKSE::log::info("Multishot cooldown finished");
+            RE::DebugNotification("Multishot: Ready to activate");
+        }
+    }
 }

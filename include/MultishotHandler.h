@@ -4,6 +4,12 @@
 #include <SKSE/SKSE.h>
 #include <chrono>
 
+enum class MultishotState {
+    Inactive,   // Normal state, multishot not available
+    Ready,      // Ready window active, next shot will be multishot
+    Cooldown    // Cooldown period, cannot activate ready state
+};
+
 class MultishotHandler : 
     public RE::BSTEventSink<RE::InputEvent*>,
     public RE::BSTEventSink<RE::BSAnimationGraphEvent>
@@ -18,19 +24,30 @@ public:
                                          RE::BSTEventSource<RE::BSAnimationGraphEvent>* a_eventSource) override;
 
     // Core functionality
-    void ToggleMultishot();
+    void ActivateReadyState();
     void OnArrowRelease(); // Call this from your animation event handler
     void LaunchMultishotArrows(RE::PlayerCharacter* player, RE::TESObjectWEAP* weapon, RE::TESAmmo* ammo, int arrowCount, int additionalArrows);
-    bool IsMultishotEnabled() const;
-    bool CanToggleMultishot();
+    void UpdateState(); // Check for state transitions (expiration, cooldown end)
+    
+    // State queries
+    bool IsInReadyState() const;
+    bool IsOnCooldown() const;
+    MultishotState GetCurrentState() const;
+    float GetRemainingReadyTime() const;
+    float GetRemainingCooldownTime() const;
+    
+    // Utility methods
+    bool CanActivateReadyState();
     bool IsValidBow(RE::TESObjectWEAP* weapon);
     bool HasSufficientAmmo(int requiredCount);
     void ConsumeAmmo(int count);
     void RegisterAnimationEventHandler();
     
 private:
-    bool multishotEnabled = false; // Toggle state
-    std::chrono::steady_clock::time_point lastToggleTime{};
+    MultishotState currentState = MultishotState::Inactive;
+    std::chrono::steady_clock::time_point readyStateStartTime{};
+    std::chrono::steady_clock::time_point cooldownStartTime{};
+    std::chrono::steady_clock::time_point lastActivationTime{};
     
     MultishotHandler() = default;
     ~MultishotHandler() = default;

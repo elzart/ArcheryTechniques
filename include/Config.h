@@ -10,6 +10,8 @@ struct MultishotConfig {
     int arrowCount = 3;
     float spreadAngle = 15.0f;
     int keyCode = 46; // 'C' key scan code
+    float readyWindowDuration = 5.0f; // Duration of ready state in seconds
+    float cooldownDuration = 20.0f; // Cooldown period in seconds
 };
 
 struct Config {
