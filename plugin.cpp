@@ -57,8 +57,8 @@ private:
 // ============================================
 SKSEPluginInfo(
     .Version = { 1, 0, 0, 0 },
-    .Name = "Multishot"sv,
-    .Author = "Author"sv,
+    .Name = "ArcheryTechniques"sv,
+    .Author = "Elzar125"sv,
     .SupportEmail = ""sv,
     .StructCompatibility = SKSE::StructCompatibility::Independent,
     .RuntimeCompatibility = SKSE::VersionIndependence::AddressLibrary

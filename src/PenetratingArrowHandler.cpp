@@ -134,6 +134,16 @@ void PenetratingArrowHandler::UpdateBowDrawState()
         return;
     }
 
+    // Check if multishot is active - if so, reset penetrating arrow state
+    auto* multishotHandler = MultishotHandler::GetSingleton();
+    if (multishotHandler->IsInReadyState()) {
+        if (currentState == PenetratingArrowState::Charging || currentState == PenetratingArrowState::Charged) {
+            SKSE::log::info("PenetratingArrow: Multishot activated - resetting penetrating arrow state");
+            ResetState();
+        }
+        return;
+    }
+
     // Check if player is still continuously drawing
     // Bow draw events fire every ~500-700ms while actively drawing
     // If we haven't seen one in >2 seconds, player stopped drawing mid-charge
@@ -469,6 +479,22 @@ bool PenetratingArrowHandler::CanStartCharging() const
     auto* weapon = equippedWeapon ? equippedWeapon->As<RE::TESObjectWEAP>() : nullptr;
     
     if (!IsValidBow(weapon)) {
+        return false;
+    }
+
+    // Check if perk is required and if player has it
+    auto* config = Config::GetSingleton();
+    if (config->enablePerks) {
+        if (!Config::HasPenetratePerk()) {
+            SKSE::log::debug("PenetratingArrow: Player does not have required perk");
+            return false;
+        }
+    }
+
+    // Check if multishot is active - cannot fire penetrating arrow with multishot
+    auto* multishotHandler = MultishotHandler::GetSingleton();
+    if (multishotHandler->IsInReadyState()) {
+        SKSE::log::debug("PenetratingArrow: Cannot start charging - multishot is in ready state");
         return false;
     }
 

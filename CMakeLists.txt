@@ -3,7 +3,7 @@
 cmake_minimum_required(VERSION 3.21)
 
 # Set your project name. This will be the name of your SKSE .dll file.
-project(AdditionalTechniques VERSION 0.0.1 LANGUAGES CXX)
+project(ArcheryTechniques VERSION 0.0.1 LANGUAGES CXX)
 
 # #
 # YOU DO NOT NEED TO EDIT ANYTHING BELOW HERE
@@ -28,7 +28,7 @@ if(DEFINED ENV{SKYRIM_MODS_FOLDER} AND IS_DIRECTORY "$ENV{SKYRIM_MODS_FOLDER}")
 endif()
 
 # Otherwise, you can set OUTPUT_FOLDER to any place you'd like :)
-set(OUTPUT_FOLDER "D:/Modding/MO2/mods/AdditionalTechniques")
+set(OUTPUT_FOLDER "D:/Modding/MO2/mods/ArcheryTechniques")
 
 # Setup your SKSE plugin as an SKSE plugin!
 set(BUILD_TESTS OFF CACHE BOOL "" FORCE)

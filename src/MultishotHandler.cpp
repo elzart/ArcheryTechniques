@@ -159,6 +159,15 @@ bool MultishotHandler::CanActivateReadyState()
         return false;
     }
 
+    // Check if perk is required and if player has it
+    auto* config = Config::GetSingleton();
+    if (config->enablePerks) {
+        if (!Config::HasMultishotPerk()) {
+            SKSE::log::debug("Multishot: Player does not have required perk");
+            return false;
+        }
+    }
+
     // Update state to check for transitions
     UpdateState();
     

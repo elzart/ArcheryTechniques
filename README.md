@@ -22,13 +22,13 @@ A Skyrim SKSE plugin that provides two powerful archery enhancement systems: **M
 - Enhanced damage (2x power) and speed (1.5x) for penetrating shots
 - Built-in cooldown system (10 seconds default) after firing
 - Requires truly continuous draw - stopping and resuming resets the charge
-- Completely independent from multishot system
+- Cannot start charging while multishot is active
 
 ### General Features
-- Both systems work independently and can be used together
+- Both systems can be used independently, with one-way restriction
 - Fully configurable via INI file with validation
 - Real-time notifications for system status
-- Comprehensive logging for debugging
+- Comprehensive logging for debugging and state tracking
 
 ## Installation
 
@@ -78,11 +78,11 @@ Common key codes for `iKeyCode`:
 4. Release to fire a penetrating arrow that pierces through enemies
 5. Wait for the 10-second cooldown before charging again
 
-### Combined Usage
-- Both systems can be used together
-- You can activate multishot and then charge a penetrating arrow
-- Each system has its own independent cooldown
-- Penetrating arrows work with multishot (all arrows become penetrating)
+### System Interaction
+- **One-Way Restriction**: You cannot start charging a penetrating arrow while multishot is active
+- **Multishot Priority**: You can activate multishot at any time, even while charging a penetrating arrow
+- **Independent Cooldowns**: Each system maintains its own cooldown timer
+- **Flexible Usage**: Multishot can interrupt penetrating arrow charging, allowing tactical choices
 
 ## Requirements
 
@@ -124,6 +124,7 @@ This plugin uses CommonLibSSE-NG and supports Skyrim SE, AE, GOG, and VR version
 
 ### Shared Infrastructure
 - Both systems share an update loop for state management
+- **One-Way Restriction Logic**: Penetrating arrow checks multishot state before charging
 - Cross-system notification updates ensure proper UI feedback
 - Comprehensive logging system for debugging and monitoring
 - Thread-safe singleton pattern for handler management

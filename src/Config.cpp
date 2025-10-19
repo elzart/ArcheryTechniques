@@ -17,13 +17,16 @@ void Config::LoadFromINI() {
     CSimpleIniA ini;
     ini.SetUnicode();
 
-    auto configPath = std::filesystem::path("Data") / "SKSE" / "Plugins" / "Multishot.ini";
+    auto configPath = std::filesystem::path("Data") / "SKSE" / "Plugins" / "ArcheryTechniques.ini";
 
     if (ini.LoadFile(configPath.string().c_str()) < 0) {
         SKSE::log::info("INI file not found at {}, using default values", configPath.string());
         return;
     }
 
+    // General Settings
+    enablePerks = ini.GetBoolValue("General", "bEnablePerks", enablePerks);
+    
     // Multishot Settings
     multishot.enabled = ini.GetBoolValue("Multishot", "bEnabled", multishot.enabled);
     multishot.arrowCount = static_cast<int>(ini.GetLongValue("Multishot", "iArrowCount", multishot.arrowCount));
@@ -70,6 +73,8 @@ void Config::LoadFromINI() {
     penetratingArrow.enabled = ini.GetBoolValue("PenetratingArrow", "bEnabled", penetratingArrow.enabled);
     penetratingArrow.chargeTime = static_cast<float>(ini.GetDoubleValue("PenetratingArrow", "fChargeTime", penetratingArrow.chargeTime));
     penetratingArrow.cooldownDuration = static_cast<float>(ini.GetDoubleValue("PenetratingArrow", "fCooldownDuration", penetratingArrow.cooldownDuration));
+    penetratingArrow.damageMultiplier = static_cast<float>(ini.GetDoubleValue("PenetratingArrow", "fDamageMultiplier", penetratingArrow.damageMultiplier));
+    penetratingArrow.speedMultiplier = static_cast<float>(ini.GetDoubleValue("PenetratingArrow", "fSpeedMultiplier", penetratingArrow.speedMultiplier));
     
     // Validate penetrating arrow configuration values
     if (penetratingArrow.chargeTime < 1.0f) {
@@ -90,6 +95,8 @@ void Config::LoadFromINI() {
         penetratingArrow.cooldownDuration = 300.0f;
     }
     
+    SKSE::log::info("General config loaded - Enable Perks: {}", enablePerks);
+    
     SKSE::log::info("Multishot config loaded - Enabled: {}, Arrow Count: {}, Spread Angle: {}, Key Code: {}, Ready Window: {}s, Cooldown: {}s", 
                     multishot.enabled, multishot.arrowCount, multishot.spreadAngle, multishot.keyCode, 
                     multishot.readyWindowDuration, multishot.cooldownDuration);
@@ -97,4 +104,56 @@ void Config::LoadFromINI() {
     SKSE::log::info("Penetrating Arrow config loaded - Enabled: {}, Charge Time: {}s, Cooldown: {}s", 
                     penetratingArrow.enabled, penetratingArrow.chargeTime, penetratingArrow.cooldownDuration);
 }
+
+bool Config::HasMultishotPerk() {
+    auto* player = RE::PlayerCharacter::GetSingleton();
+    if (!player) {
+        SKSE::log::warn("Player not available for perk check");
+        return false;
+    }
+    
+    // Look up perk by editor ID
+    auto* form = RE::TESForm::LookupByEditorID("ArcheryTechniquesMultishot");
+    if (!form) {
+        SKSE::log::warn("Could not find multishot perk (ArcheryTechniquesMultishot)");
+        return false;
+    }
+    
+    auto* perk = form->As<RE::BGSPerk>();
+    if (!perk) {
+        SKSE::log::warn("ArcheryTechniquesMultishot is not a perk");
+        return false;
+    }
+    
+    bool hasPerk = player->HasPerk(perk);
+    SKSE::log::debug("Player {} multishot perk", hasPerk ? "has" : "does not have");
+    return hasPerk;
+}
+
+bool Config::HasPenetratePerk() {
+    auto* player = RE::PlayerCharacter::GetSingleton();
+    if (!player) {
+        SKSE::log::warn("Player not available for perk check");
+        return false;
+    }
+    
+    // Look up perk by editor ID
+    auto* form = RE::TESForm::LookupByEditorID("ArcheryTechniquesPenetratingArrow");
+    if (!form) {
+        SKSE::log::warn("Could not find penetrate perk (ArcheryTechniquesPenetratingArrow)");
+        return false;
+    }
+    
+    auto* perk = form->As<RE::BGSPerk>();
+    if (!perk) {
+        SKSE::log::warn("ArcheryTechniquesPenetratingArrow is not a perk");
+        return false;
+    }
+    
+    bool hasPerk = player->HasPerk(perk);
+    SKSE::log::debug("Player {} penetrate perk", hasPerk ? "has" : "does not have");
+    return hasPerk;
+}
+
+
 

@@ -1,6 +1,6 @@
 #pragma once
 
-#include <string>
+#include <RE/Skyrim.h>
 
 // ============================================
 // Configuration -
@@ -18,15 +18,22 @@ struct PenetratingArrowConfig {
     bool enabled = true;
     float chargeTime = 3.0f; // Time to charge penetrating arrow in seconds
     float cooldownDuration = 10.0f; // Cooldown period in seconds
+    float damageMultiplier = 2.0f; // Damage multiplier for penetrating arrows
+    float speedMultiplier = 1.5f; // Speed multiplier for penetrating arrows
 };
 
 struct Config {
     MultishotConfig multishot;
     PenetratingArrowConfig penetratingArrow;
+    bool enablePerks = false; // Global setting to enable perk requirements
 
     Config();
 
     static Config* GetSingleton();
     void LoadFromINI();
+    
+    // Helper functions for perk checking
+    static bool HasMultishotPerk();
+    static bool HasPenetratePerk();
 };
 
