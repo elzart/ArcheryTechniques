@@ -1,9 +1,8 @@
 ## Development Setup
 
 ### Requirements
-- [Visual Studio 2022](https://visualstudio.microsoft.com/) (_the free Community edition_)
 - [`vcpkg`](https://github.com/microsoft/vcpkg)
-  - 1. Clone the repository using git OR [download it as a .zip](https://github.com/microsoft/vcpkg/archive/refs/heads/master.zip)
+  - 1. Clone the repository using git or download it as a .zip
   - 2. Go into the `vcpkg` folder and double-click on `bootstrap-vcpkg.bat`
   - 3. Edit your system or user Environment Variables and add a new one:
     - Name: `VCPKG_ROOT`  
