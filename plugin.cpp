@@ -9,9 +9,9 @@
 
 using namespace std::literals;
 
-// ============================================
+
 // Animation Event Handler for Arrow Release
-// ============================================
+
 class AnimationEventHandler : public RE::BSTEventSink<RE::BSAnimationGraphEvent>
 {
 public:
@@ -86,11 +86,11 @@ void OnSKSEMessage(SKSE::MessagingInterface::Message* message) {
     if (message->type == SKSE::MessagingInterface::kDataLoaded) {
         SKSE::log::info("Data loaded, registering event handlers...");
         
-        // Load configuration
+
         auto* config = Config::GetSingleton();
         config->LoadFromINI();
         
-        // Register input event handler for toggle key
+
         auto* inputDeviceManager = RE::BSInputDeviceManager::GetSingleton();
         if (inputDeviceManager) {
             inputDeviceManager->AddEventSink(MultishotHandler::GetSingleton());
@@ -99,19 +99,17 @@ void OnSKSEMessage(SKSE::MessagingInterface::Message* message) {
             SKSE::log::error("Failed to get BSInputDeviceManager singleton");
         }
 
-        // Initialize penetrating arrow handler with independent update system
-        // Register a frame update callback for the penetrating arrow system
+
         auto* eventSource = RE::BSInputDeviceManager::GetSingleton();
         if (eventSource) {
-            // Use a simple approach: register the penetrating arrow handler for input events too
-            // This will ensure it gets regular updates when the player is active
+
             eventSource->AddEventSink(PenetratingArrowHandler::GetSingleton());
             SKSE::log::info("Penetrating arrow handler registered for input events");
         }
         
         SKSE::log::info("Penetrating arrow handler initialized independently");
 
-        // Note: Animation event handlers will be registered when player enters game
+
         SKSE::log::info("Plugin initialization complete - animation events will be registered when player loads");
     }
 }

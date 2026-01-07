@@ -54,8 +54,6 @@ RE::BSEventNotifyControl PenetratingArrowHandler::ProcessEvent(RE::InputEvent* c
         return RE::BSEventNotifyControl::kContinue;
     }
     
-    // Use input events as a trigger for regular updates
-    // This ensures the penetrating arrow system updates regularly when the player is active
     Update();
     
     return RE::BSEventNotifyControl::kContinue;
@@ -68,8 +66,6 @@ void PenetratingArrowHandler::Update()
         return;
     }
 
-    // Try to register animation events if not already done
-    // Keep trying until successful (player might not be available immediately)
     static bool registrationSuccessful = false;
     if (!registrationSuccessful) {
         auto* player = RE::PlayerCharacter::GetSingleton();
@@ -195,7 +191,6 @@ void PenetratingArrowHandler::OnBowDrawStart()
         }
     }
     // If we receive a bow draw event while charging, update the last draw time
-    // This keeps the continuous draw detection active
     else if (currentState == PenetratingArrowState::Charging) {
         // Bow draw event received - player is still drawing
         SKSE::log::debug("PenetratingArrow: Bow draw event while charging - continuous draw confirmed");
@@ -205,14 +200,10 @@ void PenetratingArrowHandler::OnBowDrawStart()
 void PenetratingArrowHandler::OnBowDrawStop()
 {
     // Reset state on any bow draw stop event - player released the bow without firing
-    // Note: BowRelease fires BEFORE arrowRelease, so we need to be careful here
-    // Only reset if we're in Charging state, not if Charged (to allow firing)
     if (currentState == PenetratingArrowState::Charging) {
         SKSE::log::info("PenetratingArrow: Bow draw stopped while charging - resetting state");
         ResetState();
     }
-    // Don't reset Charged state - the arrowRelease event will handle the charged arrow
-    // BowRelease fires just before arrowRelease when firing, so we need to preserve charged state
 }
 
 void PenetratingArrowHandler::OnArrowRelease()
@@ -318,13 +309,9 @@ void PenetratingArrowHandler::LaunchPenetratingArrow(RE::PlayerCharacter* player
         auto& projData = targetArrow->GetProjectileRuntimeData();
         
         // Modify projectile for penetrating behavior
-        // Increase power for better penetration
         projData.power = 2.0f;
-        
-        // Keep the kDestroyAfterHit flag - we want it to stop at walls, just not at NPCs
-        // The kImpale impact result should handle NPC penetration specifically
-        
-        // Increase speed multiplier for better penetration
+
+
         projData.speedMult = 1.5f;
         
         // Try to remove enchantment and set penetration behavior if this is an ArrowProjectile
@@ -341,16 +328,9 @@ void PenetratingArrowHandler::LaunchPenetratingArrow(RE::PlayerCharacter* player
         auto* missileProjectile = targetArrow->As<RE::MissileProjectile>();
         if (missileProjectile) {
             auto& missileData = missileProjectile->GetMissileRuntimeData();
-            // Set to kImpale instead of kDestroy - this should allow damage but continue through
             missileData.impactResult = RE::ImpactResult::kImpale;
             SKSE::log::info("PenetratingArrow: Set impactResult to kImpale for penetration with damage");
         }
-        
-        // Instead of making it pass through everything, we need a more targeted approach
-        // We'll use a different method that allows damage to NPCs but continues through them
-        
-        // Don't modify the base projectile type - that made it pass through everything
-        // Instead, we'll use the runtime approach with better collision handling
         
         SKSE::log::info("PenetratingArrow: Using selective penetration - should hit NPCs but pass through them");
         
@@ -508,8 +488,8 @@ bool PenetratingArrowHandler::IsValidBow(RE::TESObjectWEAP* weapon) const
         return false;
     }
 
-    // Check if it's a bow (not crossbow)
+    // Check if it's a bow
     return weapon->GetWeaponType() == RE::WEAPON_TYPE::kBow;
 }
 
-// Stamina methods removed - no stamina cost for penetrating arrows
+

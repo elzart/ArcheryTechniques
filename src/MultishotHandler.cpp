@@ -68,8 +68,7 @@ RE::BSEventNotifyControl MultishotHandler::ProcessEvent(const RE::BSAnimationGra
         return RE::BSEventNotifyControl::kContinue;
     }
 
-    // Check for arrow release animation event - only process "arrowRelease", NOT "bowRelease"
-    // This prevents duplicate processing
+    // Check for arrow release animation event 
     if (a_event->tag == "arrowRelease") {
         SKSE::log::info("Arrow release detected: {}", a_event->tag.c_str());
         OnArrowRelease();
@@ -80,7 +79,7 @@ RE::BSEventNotifyControl MultishotHandler::ProcessEvent(const RE::BSAnimationGra
 
 void MultishotHandler::ActivateReadyState()
 {
-    // Update state before checking - this handles expiration and cooldown transitions
+    // Update state before checking
     UpdateState();
     
     if (currentState != MultishotState::Inactive) {
@@ -100,7 +99,7 @@ void MultishotHandler::ActivateReadyState()
     currentState = MultishotState::Ready;
     readyStateStartTime = std::chrono::steady_clock::now();
     
-    // Register animation event handler when first activated
+    // Register animation event handler 
     RegisterAnimationEventHandler();
     
     auto* config = Config::GetSingleton();
@@ -181,11 +180,11 @@ bool MultishotHandler::IsValidBow(RE::TESObjectWEAP* weapon)
         return false;
     }
 
-    // Check if it's a bow (not crossbow)
+    // Check if it's a bow 
     return weapon->GetWeaponType() == RE::WEAPON_TYPE::kBow;
 }
 
-// This gets called by your animation event handler when player releases arrow
+
 void MultishotHandler::OnArrowRelease()
 {
     // Update state to handle any transitions
@@ -283,8 +282,6 @@ void MultishotHandler::LaunchMultishotArrows(RE::PlayerCharacter* player, RE::TE
                    arrowSpeed);
     
     // Calculate spread pattern
-    // For 3 arrows with 15° spread: left at -7.5°, center at 0° (vanilla), right at +7.5°
-    // Since vanilla arrow is at center (0°), we only fire the side arrows
     float totalSpread = config->multishot.spreadAngle * (arrowCount - 1);
     float startAngle = -totalSpread / 2.0f;
     float angleIncrement = (arrowCount > 1) ? totalSpread / (arrowCount - 1) : 0.0f;
@@ -296,12 +293,9 @@ void MultishotHandler::LaunchMultishotArrows(RE::PlayerCharacter* player, RE::TE
     std::vector<ArrowData> launchedArrows;
     
     // Launch each arrow with modified yaw angle (horizontal spread only)
-    // We need to launch arrows at positions 0, 1, 2, ... but SKIP the center position
-    // For arrowCount=3: positions are -7.5° (i=0), 0° (SKIP, vanilla), +7.5° (i=2)
     int centerIndex = (arrowCount - 1) / 2; // For 3 arrows, center is at index 1
     
     for (int i = 0; i < arrowCount; ++i) {
-        // Skip the center arrow (vanilla arrow is already there)
         if (i == centerIndex) {
             continue;
         }
@@ -313,7 +307,6 @@ void MultishotHandler::LaunchMultishotArrows(RE::PlayerCharacter* player, RE::TE
         float adjustedAngleZ = baseAngles.z + spreadRadians;
         
         // Calculate offset position to prevent arrow collision
-        // Offset arrows horizontally based on their spread direction
         RE::NiPoint3 offsetOrigin = origin;
         
         // Get camera right vector for horizontal offset
@@ -520,5 +513,4 @@ void MultishotHandler::UpdateState()
         }
     }
     
-    // Penetrating arrow system is now fully independent
 }

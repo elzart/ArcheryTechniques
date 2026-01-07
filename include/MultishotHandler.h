@@ -25,7 +25,7 @@ public:
 
     // Core functionality
     void ActivateReadyState();
-    void OnArrowRelease(); // Call this from your animation event handler
+    void OnArrowRelease(); 
     void LaunchMultishotArrows(RE::PlayerCharacter* player, RE::TESObjectWEAP* weapon, RE::TESAmmo* ammo, int arrowCount, int additionalArrows);
     void UpdateState(); // Check for state transitions (expiration, cooldown end)
     
